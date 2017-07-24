@@ -4,14 +4,14 @@ if [ -z ${FOREX+x} ]; then echo "FOREX env var is not set, exiting."; exit 0; fi
 if [ -z ${ONEFORGE_API_KEY+x} ]; then echo "ONEFORGE_API_KEY env var is not set, exiting."; exit 0; fi
 
 sendAlert() {
-  alertText=$1
+  alertText="$1"
 
   # Only send SMS when the following env vars are set
   if [[ ! -z ${NEXMO_API_KEY+x} && ! -z ${NEXMO_API_SECRET+x} && ! -z ${PHONE_NO+x} ]]; then
     # We only send an SMS if smsSent.text doesn't exist or the current alertText is different from the last
     # smsSent.text file will contain the text of the last sent SMS
     lastSmsText=$(cat smsSent.text 2> /dev/null)
-    if [[ $lastSmsText != $alertText ]]; then
+    if [[ $lastSmsText != "$alertText" ]]; then
       # Send alert SMS
       curl -X POST --retry 3 --retry-delay 3 https://rest.nexmo.com/sms/json \
         -d api_key=$NEXMO_API_KEY \
@@ -23,7 +23,7 @@ sendAlert() {
       echo "`date` -- Sent SMS alert: $alertText"
 
       # Set SMS text into file
-      echo $alertText > smsSent.text
+      echo "$alertText" > smsSent.text
     fi
   fi
 
@@ -32,7 +32,7 @@ sendAlert() {
     # We only send an email if emailSent.text doesn't exist or the current alertText is different from the last
     # emailSent.text file will contain the text of the last sent email
     lastEmailText=$(cat emailSent.text 2> /dev/null)
-    if [[ $lastEmailText != $alertText ]]; then
+    if [[ $lastEmailText != "$alertText" ]]; then
       # Send alert email
       curl -X POST --retry 3 --retry-delay 3 https://api.sendgrid.com/v3/mail/send \
         --header "Authorization: Bearer $SENDGRID_KEY" \
@@ -42,7 +42,7 @@ sendAlert() {
       echo "`date` -- Sent email alert: $alertText"
 
       # Set email text into file
-      echo $alertText > emailSent.text
+      echo "$alertText" > emailSent.text
     fi
   fi
 
@@ -92,7 +92,7 @@ if [[ $forexJson != "" ]]; then
   done
 
   if [[ $alertText != "" ]]; then
-    sendAlert $alertText
+    sendAlert "$alertText"
   fi
 else
   echo "`date` -- 1Forge did not return any results for GET request."
