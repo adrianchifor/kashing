@@ -46,7 +46,7 @@ sendAlert() {
     fi
   fi
 
-  return 0;
+  return 0
 }
 
 # Trim whitespace from FOREX env var
@@ -78,7 +78,7 @@ if [[ $forexJson != "" ]]; then
     action=$(echo $forexJson | jq ".[] | select(.symbol == \"$currencyPair\") | \
       if .price >= $maxVal then \"BUY\" elif .price <= $minVal then \"SELL\" else \"\" end")
 
-    if [[ $action != "" ]]; then
+    if [[ $action != "\"\"" ]]; then
       price=$(echo $forexJson | jq ".[] | select(.symbol == \"$currencyPair\") | .price")
 
       if [[ $action == "\"BUY\"" ]]; then
