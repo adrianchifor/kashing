@@ -6,15 +6,15 @@ if [ -z ${ONEFORGE_API_KEY+x} ]; then echo "ONEFORGE_API_KEY env var is not set,
 sendAlert() {
   alertText="$1"
 
-  # Only send SMS when the following env vars are set
-  if [[ ! -z ${NEXMO_API_KEY+x} && ! -z ${NEXMO_API_SECRET+x} && ! -z ${PHONE_NO+x} ]]; then
-    # We only send an SMS if:
-    #   - smsSent.text and smsSent.hour don't exist OR
-    #   - the current alertText is different from the one in smsSent.text AND
-    #   - the current hour is different from the one in smsSent.hour
-    lastSmsText=$(cat smsSent.text 2> /dev/null)
-    lastSmsHour=$(cat smsSent.hour 2> /dev/null)
-    if [[ $lastSmsText != "$alertText" && $lastSmsHour != $(date +"%H") ]]; then
+  # We only send an alert if:
+  #   - alertSent.text and alertSent.hour don't exist OR
+  #   - the current alertText is different from the one in alertSent.text AND
+  #   - the current hour is different from the one in alertSent.hour
+  lastAlertText=$(cat alertSent.text 2> /dev/null)
+  lastAlertHour=$(cat alertSent.hour 2> /dev/null)
+  if [[ $lastAlertText != "$alertText" && $lastAlertHour != $(date +"%H") ]]; then
+    # Only send SMS when the following env vars are set
+    if [[ ! -z ${NEXMO_API_KEY+x} && ! -z ${NEXMO_API_SECRET+x} && ! -z ${PHONE_NO+x} ]]; then
       # Send alert SMS
       curl -X POST -s -S --retry 3 --retry-delay 3 https://rest.nexmo.com/sms/json \
         -d api_key=$NEXMO_API_KEY \
@@ -24,23 +24,10 @@ sendAlert() {
         -d text="$alertText"
 
       echo "`date` -- Sent SMS alert: $alertText"
-
-      # Set SMS text into file
-      echo "$alertText" > smsSent.text
-      # Set SMS hour into file
-      date +"%H" > smsSent.hour
     fi
-  fi
 
-  # Only send email when the following env vars are set
-  if [[ ! -z ${SENDGRID_KEY+x} && ! -z ${EMAIL+x} ]]; then
-    # We only send an email if:
-    #   - emailSent.text and emailSent.hour don't exist OR
-    #   - the current alertText is different from the one in emailSent.text AND
-    #   - the current hour is different from the one in emailSent.hour
-    lastEmailText=$(cat emailSent.text 2> /dev/null)
-    lastEmailHour=$(cat emailSent.hour 2> /dev/null)
-    if [[ $lastEmailText != "$alertText" && $lastEmailHour != $(date +"%H") ]]; then
+    # Only send email when the following env vars are set
+    if [[ ! -z ${SENDGRID_KEY+x} && ! -z ${EMAIL+x} ]]; then
       # Send alert email
       curl -X POST -s -S --retry 3 --retry-delay 3 https://api.sendgrid.com/v3/mail/send \
         --header "Authorization: Bearer $SENDGRID_KEY" \
@@ -48,12 +35,14 @@ sendAlert() {
         --data '{"personalizations": [{"to": [{"email": "'$EMAIL'"}]}],"from": {"email": "kashing@kashing.com"},"subject": "Money Money!","content": [{"type": "text/plain", "value": "'"$alertText"'"}]}'
 
       echo "`date` -- Sent email alert: $alertText"
-
-      # Set email text into file
-      echo "$alertText" > emailSent.text
-      # Set email hour into file
-      date +"%H" > emailSent.hour
     fi
+
+    # Set alert text into file
+    echo "$alertText" > alertSent.text
+    # Set alert hour into file
+    date +"%H" > alertSent.hour
+  else
+    echo "`date` -- Alert already sent within the hour or with the same text."
   fi
 
   return 0
