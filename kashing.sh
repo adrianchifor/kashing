@@ -13,7 +13,7 @@ sendAlert() {
     lastSmsText=$(cat smsSent.text 2> /dev/null)
     if [[ $lastSmsText != "$alertText" ]]; then
       # Send alert SMS
-      curl -X POST --retry 3 --retry-delay 3 https://rest.nexmo.com/sms/json \
+      curl -X POST -s -S --retry 3 --retry-delay 3 https://rest.nexmo.com/sms/json \
         -d api_key=$NEXMO_API_KEY \
         -d api_secret=$NEXMO_API_SECRET \
         -d to=$PHONE_NO \
@@ -34,10 +34,10 @@ sendAlert() {
     lastEmailText=$(cat emailSent.text 2> /dev/null)
     if [[ $lastEmailText != "$alertText" ]]; then
       # Send alert email
-      curl -X POST --retry 3 --retry-delay 3 https://api.sendgrid.com/v3/mail/send \
+      curl -X POST -s -S --retry 3 --retry-delay 3 https://api.sendgrid.com/v3/mail/send \
         --header "Authorization: Bearer $SENDGRID_KEY" \
         --header 'Content-Type: application/json' \
-        --data '{"personalizations": [{"to": [{"email": "'$EMAIL'"}]}],"from": {"email": "kashing@kashing.com"},"subject": "Money Money!","content": [{"type": "text/plain", "value": "'$alertText'"}]}'
+        --data '{"personalizations": [{"to": [{"email": "'$EMAIL'"}]}],"from": {"email": "kashing@kashing.com"},"subject": "Money Money!","content": [{"type": "text/plain", "value": "'"$alertText"'"}]}'
 
       echo "`date` -- Sent email alert: $alertText"
 
