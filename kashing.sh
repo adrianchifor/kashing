@@ -8,10 +8,13 @@ sendAlert() {
 
   # Only send SMS when the following env vars are set
   if [[ ! -z ${NEXMO_API_KEY+x} && ! -z ${NEXMO_API_SECRET+x} && ! -z ${PHONE_NO+x} ]]; then
-    # We only send an SMS if smsSent.text doesn't exist or the current alertText is different from the last
-    # smsSent.text file will contain the text of the last sent SMS
+    # We only send an SMS if:
+    #   - smsSent.text and smsSent.hour don't exist OR
+    #   - the current alertText is different from the one in smsSent.text AND
+    #   - the current hour is different from the one in smsSent.hour
     lastSmsText=$(cat smsSent.text 2> /dev/null)
-    if [[ $lastSmsText != "$alertText" ]]; then
+    lastSmsHour=$(cat smsSent.hour 2> /dev/null)
+    if [[ $lastSmsText != "$alertText" && $lastSmsHour != $(date +"%H") ]]; then
       # Send alert SMS
       curl -X POST -s -S --retry 3 --retry-delay 3 https://rest.nexmo.com/sms/json \
         -d api_key=$NEXMO_API_KEY \
@@ -24,15 +27,20 @@ sendAlert() {
 
       # Set SMS text into file
       echo "$alertText" > smsSent.text
+      # Set SMS hour into file
+      date +"%H" > smsSent.hour
     fi
   fi
 
   # Only send email when the following env vars are set
   if [[ ! -z ${SENDGRID_KEY+x} && ! -z ${EMAIL+x} ]]; then
-    # We only send an email if emailSent.text doesn't exist or the current alertText is different from the last
-    # emailSent.text file will contain the text of the last sent email
+    # We only send an email if:
+    #   - emailSent.text and emailSent.hour don't exist OR
+    #   - the current alertText is different from the one in emailSent.text AND
+    #   - the current hour is different from the one in emailSent.hour
     lastEmailText=$(cat emailSent.text 2> /dev/null)
-    if [[ $lastEmailText != "$alertText" ]]; then
+    lastEmailHour=$(cat emailSent.hour 2> /dev/null)
+    if [[ $lastEmailText != "$alertText" && $lastEmailHour != $(date +"%H") ]]; then
       # Send alert email
       curl -X POST -s -S --retry 3 --retry-delay 3 https://api.sendgrid.com/v3/mail/send \
         --header "Authorization: Bearer $SENDGRID_KEY" \
@@ -43,6 +51,8 @@ sendAlert() {
 
       # Set email text into file
       echo "$alertText" > emailSent.text
+      # Set email hour into file
+      date +"%H" > emailSent.hour
     fi
   fi
 
