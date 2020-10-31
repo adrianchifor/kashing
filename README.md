@@ -26,6 +26,8 @@ For email alerts (optional):
 ## Run
 
 ```
+docker build -t kashing .
+
 docker run -d -e FOREX="GBPEUR|1.115|1.150" \
   -e ONEFORGE_API_KEY="<API_KEY>" \
   -e NEXMO_API_KEY="<API_KEY>" \
@@ -33,7 +35,7 @@ docker run -d -e FOREX="GBPEUR|1.115|1.150" \
   -e PHONE_NO="<PHONE_NO>" \
   -e SENDGRID_KEY="<API_KEY>" \
   -e EMAIL="<EMAIL>" \
-  adrianchifor/kashing
+  kashing
 ```
 
 ## License
